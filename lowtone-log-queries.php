@@ -19,44 +19,59 @@
 
 namespace lowtone\log\queries {
 
-	if (!defined("SAVEQUERIES"))
-		define("SAVEQUERIES", 1);
+	use lowtone\content\packages\Package;
 
-	add_action("shutdown", function() {
-		$url = \lowtone\net\URL::fromCurrent();
+	// Includes
+	
+	if (!include_once WP_PLUGIN_DIR . "/lowtone-content/lowtone-content.php") 
+		return trigger_error("Lowtone Content plugin is required", E_USER_ERROR);
 
-		$file = LOG_DIR . DIRECTORY_SEPARATOR . sprintf("query_log-%s.sql", md5(serialize($url)));
+	Package::init(array(
+			Package::INIT_PACKAGES => array("lowtone"),
+			Package::INIT_MERGED_PATH => __NAMESPACE__,
+			Package::INIT_SUCCESS => function() {
 
-		$lines = array();
+				if (!defined("SAVEQUERIES"))
+					define("SAVEQUERIES", 1);
 
-		$lines[] = "/**";
-		$lines[] = " * QUERY LOG";
-		$lines[] = " * ";
-		$lines[] = " * Created: " . date("Y-m-d H:i:s");
-		$lines[] = " * Queries: " . count($GLOBALS["wpdb"]->queries);
-		$lines[] = " * URL: " . $url;
-		$lines[] = " * Total time: " . array_sum(array_map(function($query) {return $query[1];}, $GLOBALS["wpdb"]->queries)) . "s";
-		$lines[] = " */";
-		$lines[] = "";
-		$lines[] = "";
+				add_action("shutdown", function() {
+					$url = \lowtone\net\URL::fromCurrent();
 
-		foreach ($GLOBALS["wpdb"]->queries as $i => $query) {
-			$lines[] = "/**";
-			$lines[] = " * #" . $i;
-			$lines[] = " * Time: " . $query[1];
-			$lines[] = " * Caller: ";
+					$file = LOG_DIR . DIRECTORY_SEPARATOR . sprintf("query_log-%s.sql", md5(serialize($url)));
 
-			foreach (explode(",", $query[2]) as $caller)
-				$lines[] = " *   -->  " . trim($caller);
+					$lines = array();
 
-			$lines[] = " */";
+					$lines[] = "/**";
+					$lines[] = " * QUERY LOG";
+					$lines[] = " * ";
+					$lines[] = " * Created: " . date("Y-m-d H:i:s");
+					$lines[] = " * Queries: " . count($GLOBALS["wpdb"]->queries);
+					$lines[] = " * URL: " . $url;
+					$lines[] = " * Total time: " . array_sum(array_map(function($query) {return $query[1];}, $GLOBALS["wpdb"]->queries)) . "s";
+					$lines[] = " */";
+					$lines[] = "";
+					$lines[] = "";
 
-			$lines[] = preg_replace('/\s+/', ' ', $query[0]) . ";";
+					foreach ($GLOBALS["wpdb"]->queries as $i => $query) {
+						$lines[] = "/**";
+						$lines[] = " * #" . $i;
+						$lines[] = " * Time: " . $query[1];
+						$lines[] = " * Caller: ";
 
-			$lines[] = "";
-		}
+						foreach (explode(",", $query[2]) as $caller)
+							$lines[] = " *   -->  " . trim($caller);
 
-		file_put_contents($file,  implode("\r\n", $lines));
-	}, 9999);
+						$lines[] = " */";
+
+						$lines[] = preg_replace('/\s+/', ' ', $query[0]) . ";";
+
+						$lines[] = "";
+					}
+
+					file_put_contents($file,  implode("\r\n", $lines));
+				}, 9999);
+
+			}
+		));
 
 }
