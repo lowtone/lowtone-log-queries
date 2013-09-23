@@ -2,7 +2,7 @@
 /*
  * Plugin Name: Log queries
  * Plugin URI: http://wordpress.lowtone.nl
- * Description: 
+ * Description: Create a log file of executed queries.
  * Version: 1.0
  * Author: Lowtone <info@lowtone.nl>
  * Author URI: http://lowtone.nl
